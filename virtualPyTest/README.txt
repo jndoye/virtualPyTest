@@ -1,1 +1,0 @@
-VirtualPyTest is a Generic Automation Test Framework
