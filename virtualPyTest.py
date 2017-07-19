@@ -35,10 +35,6 @@ This file contains the following classes:
     VirtualVerification
     VirtualCondition
 """    
-##############################################################################
-# Import modules
-##############################################################################
-
 #-------------       
 # Virtual Interface
 #--------------         
@@ -514,3 +510,5 @@ def setInterface(interface):
     else:
        default_interface = VirtualInterface("default_interface")
     return default_interface
+
+default_interface = setInterface(None)
