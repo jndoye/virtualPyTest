@@ -508,11 +508,9 @@ def setInterface(interface):
         Setthe default interface
     """
     global default_interface
-    default_interface = interface
-    default_interface.isDefault = False
+    if interface:
+        default_interface = interface
+        default_interface.isDefault = False
+    else:
+       default_interface = VirtualInterface("default_interface")
     return default_interface
-#-------------       
-# Default Interface
-#-------------- 
-global default_interface
-default_interface = VirtualInterface("default_interface")
