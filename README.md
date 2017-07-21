@@ -9,10 +9,10 @@ With VirtualPyTest you will reduce the time you spend managing, executing and ma
 
 ### Philosophy
 VirtualPyTest was built to meet test automation needs according to a philosophy outlined by the following three tenets:
-   > Test automation must be simple and elegant.
-   > You should be able to use the same code regardless of the    
+   * Test automation must be simple and elegant.
+   * You should be able to use the same code regardless of the    
      system under test.
-   > Do not reinvent the wheel! Use what is already there.
+   * Do not reinvent the wheel! Use what is already there.
 
 
 ### Design
@@ -21,15 +21,15 @@ With VirtualPyTest you framework can be as light as 5 python files!
 
 
 ### Concepts
-  > A “Step” is an “Action” and a “Verification”.
-  > A “Test” is a list of “Step”.
-  > A “Use Case” is a combination of “Test”
-  > A “Test Suite” is a list of “Test”.
-  > A “Test Case” is a list of “Test Suite”.
-  > A “Test Plan” represents your entire test strategy.
-  > “Step”, “Test”, “Test Suite” and “Test Case” can be   
+  * A “Step” is an “Action” and a “Verification”.
+  * A “Test” is a list of “Step”.
+  * A “Use Case” is a combination of “Test”
+  * A “Test Suite” is a list of “Test”.
+  * A “Test Case” is a list of “Test Suite”.
+  * A “Test Plan” represents your entire test strategy.
+  * “Step”, “Test”, “Test Suite” and “Test Case” can be   
    iterated multiple times.
-  > “Test”, “Test Suite” and “Test Case” can be run with 
+  * “Test”, “Test Suite” and “Test Case” can be run with 
    different “Use Case”.
 
 
