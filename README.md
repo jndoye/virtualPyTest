@@ -1,5 +1,5 @@
-# virtualPyTest
-© N'DOYE JOACHIM
+# virtualPyTest an AWESOMATION TOOL
+N'DOYE JOACHIM
 
 Introduction
 VirtualPyTest is a Generic Test Automation Framework in python distributed under the GNU_V3 license.
