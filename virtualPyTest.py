@@ -22,7 +22,7 @@ VirtualTest is a generic hybrid automation testing framework
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-#TODO: name must be unique to get elt from TestPlan dict
+# TODO: name must be unique to get elt from TestPlan dict
 """
 This file contains the following classes:
     VirtualInterface
@@ -116,7 +116,7 @@ class VirtualVerification():
         self.result = None
         self.retry = 0
         self.retry_max = int(retry_max)
-        self.capture = None
+        self.capture = []
         self.pass_on_no_match = pass_on_no_match
     
     def execute(self, debug=False, interface=None):
@@ -182,6 +182,9 @@ class VirtualStep:
             if self.verification.verification:
                 interface.executeVerification(self.verification)
     
+    def getVerificationCapture(self):
+        return self.verification.capture
+        
     def _print(self):
         """Print VirtualStep"""
         print "{0} (x{3}) - action: {1}, verification: {2}".format(self.name, self.action, self.verification, self.max_iteration)
@@ -206,6 +209,7 @@ class VirtualTest:
         self.onFail = onFail
         self.report = ""
         self.step_list = []
+        self.step_by_step = 0
         self.max_iteration = max_iteration
         self.initUseCase(usecase)
     
@@ -226,6 +230,13 @@ class VirtualTest:
         self.step_list.append(VirtualStep(name, description, max_iteration, action, verification, wait_before_verification, verification_retry, pass_on_no_match))
         return self
 
+    def getStep(self, step_name):
+        for step in self.step_list:
+            if step.name == step_name:
+                return step
+        print "Step {0} not found".format(step_name)
+        return None
+    
     def addOnFail(self, virtualTest):
         if isinstance(virtualTest, VirtualTest):
             self.onFail = virtualTest
@@ -245,8 +256,15 @@ class VirtualTest:
             self.pass_result += 1
         if self.iteration == self.max_iteration - 1:
             self.result = self.pass_result == self.max_iteration    
-        
-    def run(self, debug=False, max_iteration=None, interface=None):
+    
+    def runNextStep(self, debug=False, max_iteration=None, interface=None):
+        if self.step_by_step == len(self.step_list):
+            print "Last step already executed.\n Starting back from first step."
+            step_by_step = 0
+        self.run(debug, max_iteration, interface, self.step_by_step)
+        self.step_by_step += 1
+            
+    def run(self, debug=False, max_iteration=None, interface=None, step_by_step=-1):
         self.status = "running"
         self.pass_result = 0
         self.result = None
@@ -258,15 +276,18 @@ class VirtualTest:
             self.max_iteration = max_iteration
         if self.checkVirtualTest(debug):
             interface = getInterface(interface)
-            if  getattr(interface, "log", None):
-                interface.log("{0} - {1} iteration(s)".format(self.name, self.max_iteration))
             print "* TEST RUN: {0} - {1} iteration(s)".format(self.name, self.max_iteration)
             for i in range(0, self.max_iteration):
                 print "---------- {0} iteration ----------".format(i + 1)
                 self.usecase.begin(debug, interface)
-                for step in self.step_list:
+                if step_by_step >= 0:
+                    step = self.step_list[step_by_step]
                     step.execute(debug, interface)
                     self.updateTestResult(step)
+                else:
+                    for step in self.step_list:
+                        step.execute(debug, interface)
+                        self.updateTestResult(step)
                 if self.onFail and not self.result:
                     print "On Fail:"
                     self.onFail.run(debug, interface)
