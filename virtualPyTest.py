@@ -181,6 +181,7 @@ class VirtualStep:
             interface.executeAction(self.action)
             if self.verification.verification:
                 interface.executeVerification(self.verification)
+                self.result = self.verification.result
     
     def getVerificationCapture(self):
         return self.verification.capture
@@ -197,7 +198,7 @@ class VirtualStep:
 # Action and Verification
 #--------------         
 class VirtualTest:
-    def __init__(self, name, description, usecase=None, max_iteration=1, test_on_debug=True, onFail=None):
+    def __init__(self, name, description, max_iteration=1, retry=0, test_on_debug=True, onFail=None, stopTestOnStepFail=False, passIfAllStepsPass = True):
         """Initialization of a VirtualTest"""
         self.status = 'init'
         self.parent = None
@@ -207,18 +208,15 @@ class VirtualTest:
         self.pass_result = 0
         self.result = None
         self.onFail = onFail
+        self.stopTestOnStepFail = stopTestOnStepFail
         self.report = ""
         self.step_list = []
+        self.usecase=VirtualUseCase(None)
         self.step_by_step = 0
         self.max_iteration = max_iteration
-        self.initUseCase(usecase)
+        self.retry = retry
+        self.passIfAllStepsPass = passIfAllStepsPass
     
-    def initUseCase(self, usecase):
-        if not usecase or not eval(usecase):
-            self.usecase = VirtualUseCase(None)
-        else:
-            self.addUseCase(usecase)
-        
     def addUseCase(self, usecase, max_iteration, action, verification=None, wait_before_verification=0, verification_retry=0, pass_on_no_match=False):
         if isinstance(usecase, VirtualUseCase):
             self.usecase = usecase
@@ -264,7 +262,7 @@ class VirtualTest:
         self.run(debug, max_iteration, interface, self.step_by_step)
         self.step_by_step += 1
             
-    def run(self, debug=False, max_iteration=None, interface=None, step_by_step=-1):
+    def run(self, debug=False, max_iteration=None, retry=0, interface=None, step_by_step=-1):
         self.status = "running"
         self.pass_result = 0
         self.result = None
@@ -288,12 +286,24 @@ class VirtualTest:
                     for step in self.step_list:
                         step.execute(debug, interface)
                         self.updateTestResult(step)
-                if self.onFail and not self.result:
-                    print "On Fail:"
-                    self.onFail.run(debug, interface)
+                        if step.result and not self.passIfAllStepsPass:
+                            print "Test '{0}' pass since step {1} passed, following steps will be skipped".format(self.name, step.name)
+                            break;
+                        elif self.stopTestOnStepFail and not step.result:
+                            print "Test '{0}' is stopped because step '{1}' failed".format(self.name, step.name)
+                            break;
+                if not self.result:
+                    if self.onFail:
+                        print "On Fail:"
+                        self.onFail.run(debug, 1, 0, interface)
+                    if retry>0:
+                        print "retrying test '{0}'".format(self.name)
+                        self.run(debug, max_iteration, retry-1, interface, step_by_step)
+                        
                 self.usecase.end(debug, interface)
         self.max_iteration = tmp
         self.status = "complete"
+        return self.result
     
     def getTestResult(self, debug=False):
         if self.status == "complete":
@@ -357,7 +367,7 @@ class VirtualTestSuite:
         virtualTest.parent = self
         self.test_list.append(virtualTest)
     
-    def run(self, debug=False, max_iteration=None, interface=None):
+    def run(self, debug=False, max_iteration=None,  interface=None):
         self.status = "running"
         self.result = None 
         self.iteration = 0
@@ -369,6 +379,7 @@ class VirtualTestSuite:
         for _ in range(0, self.max_iteration):
             for test in self.test_list:
                 test.run(debug, test.max_iteration, interface)
+            
             if self.onFail and not self.result:
                 self.onFail.execute(debug, self.onFail.max_iteration, interface)
         self.usecase.end(debug)
