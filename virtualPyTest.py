@@ -199,7 +199,7 @@ class VirtualStep:
 # Action and Verification
 #--------------         
 class VirtualTest:
-    def __init__(self, name, description, max_iteration=1, retry=0, test_on_debug=True, onFail=None, stopTestOnStepFail=False, passIfAllStepsPass = True):
+    def __init__(self, name, description, max_iteration=1, retry=0, test_on_debug=True, onFail=[], stopTestOnStepFail=False, passIfAllStepsPass=True):
         """Initialization of a VirtualTest"""
         self.status = 'init'
         self.parent = None
@@ -212,7 +212,7 @@ class VirtualTest:
         self.stopTestOnStepFail = stopTestOnStepFail
         self.report = ""
         self.step_list = []
-        self.usecase=VirtualUseCase(None)
+        self.usecase = VirtualUseCase(None)
         self.step_by_step = 0
         self.max_iteration = max_iteration
         self.retry = retry
@@ -236,11 +236,11 @@ class VirtualTest:
         print "Step {0} not found".format(step_name)
         return None
     
-    def addOnFail(self, virtualTest):
-        if isinstance(virtualTest, VirtualTest):
-            self.onFail = virtualTest
+    def addOnFail(self, on_fail):
+        if isinstance(on_fail, (VirtualTest, VirtualStep)):
+            self.onFail = on_fail
         else:
-            raise "Error: addOnFail parameter must be a VirtualTest "
+            raise "Error: addOnFail parameter must be a VirtualTest or VirtualStep "
         return self
                 
     def checkVirtualTest(self, debug):
@@ -293,13 +293,29 @@ class VirtualTest:
                         elif self.stopTestOnStepFail and not step.result:
                             print "Test '{0}' is stopped because step '{1}' failed".format(self.name, step.name)
                             break;
+                
                 if not self.result:
-                    if self.onFail:
-                        print "On Fail:"
-                        self.onFail.run(debug, 1, 0, interface)
-                    if retry>0:
+                    if retry == 0:
+                        if self.onFail:
+                            print "On Fail"
+                            for onFail in self.onFail:
+                                if isinstance(onFail, VirtualTest):
+                                    for step in onFail.step_list:
+                                        step.execute(debug, interface)
+                                else:
+                                    onFail.execute(debug, interface)
+                    else:
+                        if self.onFail:
+                            print "On Fail"
+                            onFail = self.onFail[(self.retry - retry) % len(self.onFail)]
+                            if isinstance(onFail, VirtualTest):
+                                for step in onFail.step_list:
+                                    step.execute(debug, interface)
+                            else:
+                                onFail.execute(debug, interface)
                         print "retrying test '{0}'".format(self.name)
-                        self.run(debug, max_iteration, retry-1, interface, step_by_step)
+                        self.run(debug, max_iteration, retry - 1, interface, step_by_step)
+                        
                 self.usecase.end(debug, interface)
         self.max_iteration = tmp
         self.status = "complete"
@@ -367,7 +383,7 @@ class VirtualTestSuite:
         virtualTest.parent = self
         self.test_list.append(virtualTest)
     
-    def run(self, debug=False, max_iteration=None,  interface=None):
+    def run(self, debug=False, max_iteration=None, interface=None):
         self.status = "running"
         self.result = None 
         self.iteration = 0
