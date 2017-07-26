@@ -117,7 +117,7 @@ class VirtualVerification():
         self.retry = 0
         self.retry_max = int(retry_max)
         self.capture = []
-        self.pass_on_no_match = pass_on_no_match
+        self.pass_on_no_match = bool(pass_on_no_match)
     
     def execute(self, debug=False, interface=None):
         if self.retry_max == 0:
@@ -178,11 +178,12 @@ class VirtualStep:
     def execute(self, debug=False, interface=None):
         print "{0}:".format(self.name)
         for _ in range(0, self.max_iteration):
-            interface.executeAction(self.action)
+            if self.action.action and self.action.action != []:
+                interface.executeAction(self.action)
             if self.verification.verification:
                 interface.executeVerification(self.verification)
                 self.result = self.verification.result
-    
+                
     def getVerificationCapture(self):
         return self.verification.capture
         
@@ -299,7 +300,6 @@ class VirtualTest:
                     if retry>0:
                         print "retrying test '{0}'".format(self.name)
                         self.run(debug, max_iteration, retry-1, interface, step_by_step)
-                        
                 self.usecase.end(debug, interface)
         self.max_iteration = tmp
         self.status = "complete"
