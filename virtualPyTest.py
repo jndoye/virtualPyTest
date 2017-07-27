@@ -139,11 +139,11 @@ class VirtualVerification():
             return "VirtualTest: '{0}' has not been run".format(self.parent.name)  
             
     def  __str__(self):
-        """Module called when converting the objectto string"""
+        """Module called when converting the object to string"""
         if self.verification:
             return "wait {1}s then check '{0}'".format(self.verification, self.wait_before_verification)
         else:
-            return None
+            return "None"
 #-------------       
 # Virtual Condition
 #--------------         
@@ -186,11 +186,10 @@ class VirtualStep:
                 
     def getVerificationCapture(self):
         return self.verification.capture
-        
-    def _print(self):
-        """Print VirtualStep"""
-        print "{0} (x{3}) - action: {1}, verification: {2}".format(self.name, self.action, self.verification, self.max_iteration)
-        
+    
+    def result(self):
+        return self.verification.result
+    
     def  __str__(self):
         """Module called when converting the object to string"""
         return "{0} (x{3}) - action: {1}, verification: {2}".format(self.name, self.action, self.verification, self.max_iteration)
@@ -256,14 +255,14 @@ class VirtualTest:
         if self.iteration == self.max_iteration - 1:
             self.result = self.pass_result == self.max_iteration    
     
-    def runNextStep(self, debug=False, max_iteration=None, interface=None):
+    def runNextStep(self, debug=False, max_iteration=None, retry=0, interface=None):
         if self.step_by_step == len(self.step_list):
             print "Last step already executed.\n Starting back from first step."
             step_by_step = 0
-        self.run(debug, max_iteration, interface, self.step_by_step)
+        self.run(debug, max_iteration, retry, interface, self.step_by_step)
         self.step_by_step += 1
             
-    def run(self, debug=False, max_iteration=None, retry=0, interface=None, step_by_step=-1):
+    def run(self, debug=False, max_iteration=None, retry=0, interface=None, step_by_step=-1, spy_list=None):
         self.status = "running"
         self.pass_result = 0
         self.result = None
@@ -275,6 +274,7 @@ class VirtualTest:
             self.max_iteration = max_iteration
         if self.checkVirtualTest(debug):
             interface = getInterface(interface)
+            executeSpies(self, "running", spy_list)
             print "* TEST RUN: {0} - {1} iteration(s)".format(self.name, self.max_iteration)
             for i in range(0, self.max_iteration):
                 print "---------- {0} iteration ----------".format(i + 1)
@@ -293,32 +293,24 @@ class VirtualTest:
                         elif self.stopTestOnStepFail and not step.result:
                             print "Test '{0}' is stopped because step '{1}' failed".format(self.name, step.name)
                             break;
-                
                 if not self.result:
                     if retry == 0:
                         if self.onFail:
                             print "On Fail"
                             for onFail in self.onFail:
-                                if isinstance(onFail, VirtualTest):
-                                    for step in onFail.step_list:
-                                        step.execute(debug, interface)
-                                else:
-                                    onFail.execute(debug, interface)
+                               executeOnFail(onFail)
                     else:
                         if self.onFail:
                             print "On Fail"
                             onFail = self.onFail[(self.retry - retry) % len(self.onFail)]
-                            if isinstance(onFail, VirtualTest):
-                                for step in onFail.step_list:
-                                    step.execute(debug, interface)
-                            else:
-                                onFail.execute(debug, interface)
+                            executeOnFail(onFail)
                         print "retrying test '{0}'".format(self.name)
                         self.run(debug, max_iteration, retry - 1, interface, step_by_step)
                         
                 self.usecase.end(debug, interface)
         self.max_iteration = tmp
         self.status = "complete"
+        executeSpies(self, "complete", spy_list)
         return self.result
     
     def getTestResult(self, debug=False):
@@ -326,26 +318,17 @@ class VirtualTest:
             return "VirtualTest: '{0}' - {1} with {2}/{3} iteration(s)".format(self.name, getPassFail(self.result), self.iteration, self.max_iteration)
         else:
             return "VirtualTest: '{0}' has not been run".format(self.name)
-            
-    def  __str__(self):
-        """Module called when converting the objectto string"""
-        return "VirtualTest '{0}'".format(self.name)
     
-    def _print(self):
-        """Print VirtualTest"""
-        print "*" * 50
-        print "VirtualTest: {0}".format(self.name)
-        print "*" * 50
-        print "description: {0}".format(self.description)
-        print "usecase: {0}".format(self.usecase)
-        print "Number of steps: {0}".format(len(self.step_list))
-        self._printSteps()
-        print "test_on_debug: {0}".format(self.test_on_debug)
-    
-    def _printSteps(self):
-        """Print VirtualTest Steps"""
+    def getStepListName(self):
+        step_list_name = []
         for step in self.step_list:
-            step._print()
+            step_list_name.append(step.name)   
+        return step_list_name
+         
+    def  __str__(self):
+        """Module called when converting the object to string"""
+        return "VirtualTest {0} (steps: {1})".format(self.name, self.getStepListName())
+    
 #-------------
 # Virtual Test List
 # A list of Virtual Test
@@ -560,3 +543,24 @@ def setInterface(interface):
     return default_interface
 
 default_interface = setInterface(None)
+
+#-------------       
+# Execute Spies
+#-------------- 
+def executeSpies(test, status, spy_list):
+    # spy_list contains a list of tuples (function, log, log_names)
+    if spy_list:
+        if isinstance(spy_list, tuple):  # To handle single spy tuple
+            spy_list = [spy_list]
+        for spy, log, log_name in spy_list:
+            spy(test, status, log, log_name)
+
+#-------------       
+# Execute Spies
+#-------------- 
+def executeOnFail(onFail):
+    if isinstance(onFail, VirtualTest):
+        for step in onFail.step_list:
+            step.execute(debug, interface)
+    else:
+        onFail.execute(debug, interface)
