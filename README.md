@@ -1,4 +1,4 @@
-# VirtualPyTest the awesomation tool
+# VirtualPyTest is an Awesomation Tool
 N'DOYE JOACHIM
 
 ### Introduction
