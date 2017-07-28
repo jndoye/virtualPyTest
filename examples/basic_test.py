@@ -37,11 +37,11 @@ if __name__ == '__main__':
     # TEST CREATION
     #========================
     print "-"*20 + "BEGIN TEST CREATION " + "-"*20
-    virtualTest_1 = VirtualTest("virtualTest_1", "home_to_youtube").addStep("step1", "desc", 1, "home/home_to_youtube", "youtube/youtube_logo")
+    virtualTest_1 = VirtualTest("virtualTest_1", "home_to_youtube").addStep("step1", "desc", 1, "home/home_to_youtube", "youtube/youtube_logo")[0]
     virtualTest_2 = VirtualTest("virtualTest_2", "home_to_netflix")
     virtualTest_2.addStep("step1", "desc", 1, "vod_title", "vod/title")
     virtualTest_2.addStep("step1", "desc", 1, "barker_vod", "vod/barker")
-    virtualTest_3 = VirtualTest("virtualTest_3", "zap").addStep("step1", "desc", 1, "zap_TF1", "live/tf1_logo", None, 2, True)
+    virtualTest_3 = VirtualTest("virtualTest_3", "zap").addStep("step1", "desc", 1, "zap_TF1", "live/tf1_logo", None, 2, True)[0]
     virtualTest_1._print()
     virtualTest_2._print()
     virtualTest_3._print()

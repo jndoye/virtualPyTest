@@ -225,8 +225,9 @@ class VirtualTest:
             return self
             
     def addStep(self, name, description, max_iteration, action, verification=None, wait_before_verification=0, verification_retry=0, pass_on_no_match=False):
-        self.step_list.append(VirtualStep(name, description, max_iteration, action, verification, wait_before_verification, verification_retry, pass_on_no_match))
-        return self
+        step = VirtualStep(name, description, max_iteration, action, verification, wait_before_verification, verification_retry, pass_on_no_match)
+        self.step_list.append(step)
+        return self, step
 
     def getStep(self, step_name):
         for step in self.step_list:
@@ -259,8 +260,9 @@ class VirtualTest:
         if self.step_by_step == len(self.step_list):
             print "Last step already executed.\n Starting back from first step."
             step_by_step = 0
-        self.run(debug, max_iteration, retry, interface, self.step_by_step)
+        result = self.run(debug, max_iteration, retry, interface, self.step_by_step)
         self.step_by_step += 1
+        return result
             
     def run(self, debug=False, max_iteration=None, retry=0, interface=None, step_by_step=-1, spy_list=None):
         self.status = "running"
