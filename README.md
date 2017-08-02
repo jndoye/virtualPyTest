@@ -20,14 +20,14 @@ With VirtualPyTest you framework can be as light as 5 python files!
 
 
 ### Concepts
-  * A “Step” is an “Action” and a “Verification”.
-  * A “Test” is a list of “Step”.
-  * A “Use Case” is a combination of “Test”
-  * A “Test Suite” is a list of “Test”.
-  * A “Test Case” is a list of “Test Suite”.
-  * A “Test Plan” represents your entire test strategy.
-  * “Step”, “Test”, “Test Suite” and “Test Case” can be iterated multiple times.
-  * “Test”, “Test Suite” and “Test Case” can be run with different “Use Case”.
+  * A 'Step' is an 'Action' and a 'Verification'.
+  * A 'Test' is a list of 'Step'.
+  * A 'Use Case' is a combination of 'Test'
+  * A 'Test Suite' is a list of 'Test'.
+  * A 'Test Case' is a list of 'Test Suite'.
+  * A 'Test Plan' represents your entire test strategy.
+  * 'Step', 'Test', 'Test Suite' and 'Test Case' can be iterated multiple times.
+  * 'Test', 'Test Suite' and 'Test Case' can be run with different 'Use Case'.
 
 
 ### Why VirtualPyTest?
