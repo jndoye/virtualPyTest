@@ -42,9 +42,9 @@ if __name__ == '__main__':
     virtualTest_2.addStep("step1", "desc", 1, "vod_title", "vod/title")
     virtualTest_2.addStep("step1", "desc", 1, "barker_vod", "vod/barker")
     virtualTest_3 = VirtualTest("virtualTest_3", "zap").addStep("step1", "desc", 1, "zap_TF1", "live/tf1_logo", None, 2, True)[0]
-    virtualTest_1._print()
-    virtualTest_2._print()
-    virtualTest_3._print()
+    print virtualTest_1
+    print virtualTest_2
+    print virtualTest_3
     print "-"*20 + " END TEST CREATION " + "-"*20
     #========================
     # TEST RUN

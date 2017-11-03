@@ -49,7 +49,7 @@ class VirtualInterface:
         return True
     
     def executeVerification(self, verification):
-        print "Interface executeVerification: {0}".format(verification)
+        print "Interface executeVerification: {0}".format(verification), "PASS"
         verification.result = True
         return True
         
@@ -184,6 +184,7 @@ class VirtualStep:
                 interface.executeVerification(self.verification)
                 self.result = self.verification.result
                 
+                
     def getVerificationCapture(self):
         return self.verification.capture
     
@@ -259,7 +260,7 @@ class VirtualTest:
     def runNextStep(self, debug=False, max_iteration=None, retry=0, interface=None):
         if self.step_by_step == len(self.step_list):
             print "Last step already executed.\n Starting back from first step."
-            step_by_step = 0
+            self.step_by_step = 0
         result = self.run(debug, max_iteration, retry, interface, self.step_by_step)
         self.step_by_step += 1
         return result
@@ -284,10 +285,13 @@ class VirtualTest:
                 if step_by_step >= 0:
                     step = self.step_list[step_by_step]
                     step.execute(debug, interface)
+                    self.iteration = i
                     self.updateTestResult(step)
+                    
                 else:
                     for step in self.step_list:
                         step.execute(debug, interface)
+                        self.iteration = i
                         self.updateTestResult(step)
                         if step.result and not self.passIfAllStepsPass:
                             print "Test '{0}' pass since step {1} passed, following steps will be skipped".format(self.name, step.name)
@@ -295,19 +299,19 @@ class VirtualTest:
                         elif self.stopTestOnStepFail and not step.result:
                             print "Test '{0}' is stopped because step '{1}' failed".format(self.name, step.name)
                             break;
-                if not self.result:
-                    if retry == 0:
-                        if self.onFail:
-                            print "On Fail"
-                            for onFail in self.onFail:
-                               executeOnFail(onFail)
-                    else:
-                        if self.onFail:
-                            print "On Fail"
-                            onFail = self.onFail[(self.retry - retry) % len(self.onFail)]
-                            executeOnFail(onFail)
-                        print "retrying test '{0}'".format(self.name)
-                        self.run(debug, max_iteration, retry - 1, interface, step_by_step)
+            if not self.result:
+                if retry == 0:
+                    if self.onFail:
+                        print "On Fail"
+                        for onFail in self.onFail:
+                            executeOnFail(onFail, debug, interface)
+                else:
+                    if self.onFail:
+                        print "On Fail"
+                        onFail = self.onFail[(self.retry - retry) % len(self.onFail)]
+                        executeOnFail(onFail)
+                    print "retrying test '{0}'".format(self.name)
+                    self.run(debug, max_iteration, retry - 1, interface, step_by_step)
                         
                 self.usecase.end(debug, interface)
         self.max_iteration = tmp
@@ -368,7 +372,7 @@ class VirtualTestSuite:
         virtualTest.parent = self
         self.test_list.append(virtualTest)
     
-    def run(self, debug=False, max_iteration=None, interface=None):
+    def run(self, debug=False, max_iteration=None, retry=0, interface=None):
         self.status = "running"
         self.result = None 
         self.iteration = 0
@@ -379,8 +383,8 @@ class VirtualTestSuite:
         self.usecase.begin(debug)
         for _ in range(0, self.max_iteration):
             for test in self.test_list:
-                test.run(debug, test.max_iteration, interface)
-            
+                test.run(debug, test.max_iteration, retry, interface)
+                                        
             if self.onFail and not self.result:
                 self.onFail.execute(debug, self.onFail.max_iteration, interface)
         self.usecase.end(debug)
@@ -541,7 +545,7 @@ def setInterface(interface):
         default_interface = interface
         default_interface.isDefault = False
     else:
-       default_interface = VirtualInterface("default_interface")
+        default_interface = VirtualInterface("default_interface")
     return default_interface
 
 default_interface = setInterface(None)
@@ -560,9 +564,24 @@ def executeSpies(test, status, spy_list):
 #-------------       
 # Execute Spies
 #-------------- 
-def executeOnFail(onFail):
+def executeOnFail(onFail, debug=False, interface=None):
     if isinstance(onFail, VirtualTest):
         for step in onFail.step_list:
             step.execute(debug, interface)
     else:
         onFail.execute(debug, interface)
+        
+#-------------       
+# Get Pass Fail
+#-------------- 
+def getPassFail(result):
+    """
+    Description:
+        Get a PASS/FAIL string from a boolean result TRUE/FALSE
+    Arguments:
+       result bool : True or False
+    """
+    if result:
+        return "PASS"
+    else:
+        return "FAIL"
