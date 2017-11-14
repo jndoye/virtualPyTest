@@ -29,7 +29,7 @@ Examples of tests to illustrate the basic of VirtualTest
 import os, sys
 testdir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(testdir + "\\..")
-from virtualPyTest import VirtualTestCase, VirtualTestSuite, VirtualTest
+from virtualPyTest.virtualPyTest import VirtualTestCase, VirtualTestSuite, VirtualTest
 
 # Main
 if __name__ == '__main__':

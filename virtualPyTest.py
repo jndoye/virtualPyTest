@@ -178,9 +178,9 @@ class VirtualStep:
     def execute(self, debug=False, interface=None):
         print "{0}:".format(self.name)
         for _ in range(0, self.max_iteration):
-            if self.action.action and self.action.action != []:
+            if interface and self.action.action and self.action.action != []:
                 interface.executeAction(self.action)
-            if self.verification.verification:
+            if interface and self.verification.verification:
                 interface.executeVerification(self.verification)
                 self.result = self.verification.result
                 
